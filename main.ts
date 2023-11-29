@@ -1,10 +1,23 @@
 import { Octokit } from "https://esm.sh/@octokit/rest@20.0.2";
 
 const octokit = new Octokit();
+const kv = await Deno.openKv();
 
 async function handler(_req: Request): Promise<Response> {
-  const cli = await cliVersions();
-  const std = await stdVersions();
+  const expireIn: number = Date.now() + 1000 * 60 * 60 * 24;
+
+  let cli = (await kv.get<string[]>(["version", "cli"])).value;
+  let std = (await kv.get<string[]>(["version", "std"])).value;
+
+  if (cli == null) {
+    cli = await cliVersions();
+    await kv.set(["version", "cli"], cli, { expireIn });
+  }
+
+  if (std == null) {
+    std = await stdVersions();
+    await kv.set(["version", "std"], std, { expireIn });
+  }
 
   const body = {
     cli,
@@ -14,7 +27,7 @@ async function handler(_req: Request): Promise<Response> {
   return new Response(JSON.stringify(body, null, 2));
 }
 
-async function cliVersions() {
+async function cliVersions(): Promise<string[]> {
   const owner = "denoland";
   const repo = "deno";
 
@@ -24,10 +37,10 @@ async function cliVersions() {
     per_page: 100,
   });
 
-  return data.map((release) => release.name);
+  return data.map((release) => release.name).filter(Boolean) as string[];
 }
 
-async function stdVersions() {
+async function stdVersions(): Promise<string[]> {
   const owner = "denoland";
   const repo = "deno_std";
 
@@ -37,7 +50,7 @@ async function stdVersions() {
     per_page: 100,
   });
 
-  return data.map((release) => release.name);
+  return data.map((release) => release.name).filter(Boolean) as string[];
 }
 
 Deno.serve(handler);
