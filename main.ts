@@ -1,4 +1,4 @@
-import { Octokit } from "https://esm.sh/@octokit/rest@20.0.2";
+import { Octokit } from "https://esm.sh/@octokit/rest@21.0.1";
 
 const octokit = new Octokit();
 const kv = await Deno.openKv();
