@@ -4,7 +4,7 @@ const octokit = new Octokit();
 const kv = await Deno.openKv();
 
 async function handler(_req: Request): Promise<Response> {
-  const expireIn: number = 1000 * 60 * 60 * 24;
+  const expireIn: number = 1000 * 60 * 60;
 
   let cli = (await kv.get<string[]>(["version", "cli"])).value;
   let std = (await kv.get<string[]>(["version", "std"])).value;
